@@ -1,6 +1,28 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include "../include/functions.h"
 
 int main() {
   // TODO 1: Call the function that creates the shared memory segment.
+  MemoryCreate();
+
+  int AirControlChild = fork();
+
+  if (AirControlChild == 0) {
+    // Child Process
+    // Not sure if this is the right absolute path
+    execl("./test/radio", "radio", "/SharedMemory", NULL);
+    perror("execl failed");
+    exit(1);
+  } else if (AirControlChild > 0) {
+    // Parent Process
+    wait(NULL);
+  } else {
+    perror("air_control fork failed");
+  }
 
   // TODO 3: Configure the SIGUSR2 signal to increment the planes on the runway
   // by 5.
