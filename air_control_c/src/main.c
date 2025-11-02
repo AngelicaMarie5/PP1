@@ -11,7 +11,7 @@
 #define SHM_NAME "/SharedMemory"
 #define SHM_SIZE sizeof(int) * 3
 
-int* shm_PIDs;
+int* shm_PIDs; //
 
 int planes = 0;
 int takeoffs = 0;
