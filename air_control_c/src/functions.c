@@ -43,7 +43,8 @@ void MemoryCreate() {
     exit(1);
   }
 
-  // Maybe?
+  // Instruction says: Save the PID of the air_control process in the first
+  // position of the memory block. Maybe?
   shared_PIDs[0] = getppid();
 }
 

@@ -13,13 +13,19 @@ int main() {
 
   if (AirControlChild == 0) {
     // Child Process
+    // Instruction says: In the child process, save its PID in the second
+    // position of the memory block and run the radio program.
+    int child_pid = getpid();
+    shared_PIDs[1] = child_pid;
     // Not sure if this is the right absolute path
     execl("./test/radio", "radio", "/SharedMemory", NULL);
     perror("execl failed");
     exit(1);
+
   } else if (AirControlChild > 0) {
     // Parent Process
     wait(NULL);
+
   } else {
     perror("air_control fork failed");
   }
