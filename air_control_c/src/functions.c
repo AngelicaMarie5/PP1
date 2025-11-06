@@ -1,18 +1,24 @@
 #include "functions.h"
 
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 #define SIZE sizeof(int) * 3
+#define TOTAL_TAKEOFFS 20
 
 int planes = 0;
 int takeoffs = 0;
 int total_takeoffs = 0;
 
 int* shared_PIDs;
+
+pthread_mutex_t state_lock;
+pthread_mutex_t runway1_lock;
+pthread_mutex_t runway2_lock;
 
 void MemoryCreate() {
   // TODO2: create the shared memory segment, configure it and store the PID of
@@ -59,4 +65,46 @@ void* TakeOffsFunction() {
   //    Simulate the time a takeoff takes with sleep(1)
   //    Send SIGUSR1 every 5 local takeoffs
   //    Send SIGTERM when the total takeoffs target is reached
+
+  while (total_takeoffs < TOTAL_TAKEOFFS) {
+    int trylock1 = pthread_mutex_trylock(&runway1_lock);
+    int trylock2 = pthread_mutex_trylock(&runway2_lock);
+    if (trylock1 == 0) {
+      pthread_mutex_lock(&runway1_lock);
+      pthread_mutex_lock(&state_lock);
+      planes -= 1;
+      takeoffs += 1;
+      total_takeoffs += 1;
+
+      sleep(1);
+
+      if (takeoffs == 5) {
+        takeoffs = 0;
+        // kill(shared_PIDs[1], SIGUSR1);
+      }
+
+      pthread_mutex_unlock(&state_lock);
+      pthread_mutex_unlock(&runway1_lock);
+
+    } else if (trylock2 == 0) {
+      pthread_mutex_lock(&runway2_lock);
+      pthread_mutex_lock(&state_lock);
+      planes -= 1;
+      takeoffs += 1;
+      total_takeoffs += 1;
+      sleep(1);
+
+      if (takeoffs == 5) {
+        takeoffs = 0;
+
+        // kill(shared_PIDs[1], SIGUSR1);
+      }
+
+      pthread_mutex_unlock(&state_lock);
+      pthread_mutex_unlock(&runway2_lock);
+    }
+    sleep(1000);
+  }
+
+  // kill(shared_PIDs[1], SIGTERM);
 }
