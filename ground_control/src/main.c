@@ -42,14 +42,19 @@ void SIGTERM_handler(int signal) {
 void Traffic(int signum) {
   // TODO:
   // Calculate the number of waiting planes.
+  int num_planes_waiting;
+  pthread_mutex_lock(&state_lock);
+  num_planes_waiting = planes - takeoffs;
+  pthread_mutex_unlock(&state_lock);
+
   // Check if there are 10 or more waiting planes to send a signal and increment
   // planes. Ensure signals are sent and planes are incremented only if the
   // total number of planes has not been exceeded.
   pthread_mutex_lock(&state_lock);
-  if (planes >= 10) {
+  if (num_planes_waiting >= 10) {
     printf("RUNWAY OVERLOADED");
   }
-  if (planes < PLANES_LIMIT) {
+  if (num_planes_waiting < PLANES_LIMIT) {
     planes += 5;
     kill(shared_PIDs[1], SIGUSR2);
   }
@@ -87,10 +92,14 @@ int main(int argc, char* argv[]) {
   sigaction(SIGTERM, &sa, NULL);
 
   // 2. Configure the timer to execute the Traffic function.
+  signal(SIGALRM, Traffic);
+
   struct itimerval timer;
   timer.it_value.tv_sec = 0;
   timer.it_value.tv_usec = 500000;  // 500 ms
   timer.it_interval.tv_sec = 0;
   timer.it_interval.tv_usec = 500000;
   setitimer(ITIMER_REAL, &timer, NULL);
+
+  return 0;
 }

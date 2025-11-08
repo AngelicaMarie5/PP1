@@ -20,15 +20,17 @@ pthread_mutex_t state_lock;
 pthread_mutex_t runway1_lock;
 pthread_mutex_t runway2_lock;
 
+void SIGUSR2_handler(int signal) {
+  pthread_mutex_lock(&state_lock);
+  planes += 5;
+  pthread_mutex_unlock(&state_lock);
+}
+
 void MemoryCreate() {
   // TODO2: create the shared memory segment, configure it and store the PID of
   // the process in the first position of the memory block.
 
   // Create shared memory object
-  /*
-  Not sure if it should be 0666 -> read and write acces
-  Or if it should be 0777 -> read, write and execute access
-  */
   pthread_mutex_init(&state_lock, NULL);
   pthread_mutex_init(&runway1_lock, NULL);
   pthread_mutex_init(&runway2_lock, NULL);
@@ -39,8 +41,6 @@ void MemoryCreate() {
     exit(1);
   }
 
-  // Configure size of shared memory object large enough to store three integer
-  // values
   if (ftruncate(shm_fd, SHM_SIZE) == -1) {
     perror("ftruncate failed");
     exit(1);
@@ -53,8 +53,6 @@ void MemoryCreate() {
     exit(1);
   }
 
-  // Instruction says: Save the PID of the air_control process in the first
-  // position of the memory block. Maybe?
   shared_PIDs[0] = getpid();
 }
 
@@ -70,10 +68,15 @@ void* TakeOffsFunction(void* arg) {
   //    Send SIGUSR1 every 5 local takeoffs
   //    Send SIGTERM when the total takeoffs target is reached
 
+  printf("Thread started: ID %lu\n", pthread_self());
+  fflush(stdout);
+
   while (total_takeoffs < TOTAL_TAKEOFFS) {
     int trylock1 = pthread_mutex_trylock(&runway1_lock);
     int trylock2 = pthread_mutex_trylock(&runway2_lock);
     if (trylock1 == 0) {
+      printf("Thread %lu acquired runway 1\n", pthread_self());
+      fflush(stdout);
       pthread_mutex_lock(&runway1_lock);
       pthread_mutex_lock(&state_lock);
       planes -= 1;
@@ -91,6 +94,8 @@ void* TakeOffsFunction(void* arg) {
       pthread_mutex_unlock(&runway1_lock);
 
     } else if (trylock2 == 0) {
+      printf("Thread %lu acquired runway 2\n", pthread_self());
+      fflush(stdout);
       pthread_mutex_lock(&runway2_lock);
       pthread_mutex_lock(&state_lock);
       planes -= 1;
@@ -111,10 +116,4 @@ void* TakeOffsFunction(void* arg) {
   }
 
   kill(shared_PIDs[1], SIGTERM);
-}
-
-void SIGUSR2_handler(int signal) {
-  pthread_mutex_lock(&state_lock);
-  planes += 5;
-  pthread_mutex_unlock(&state_lock);
 }
