@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -28,6 +29,10 @@ void MemoryCreate() {
   Not sure if it should be 0666 -> read and write acces
   Or if it should be 0777 -> read, write and execute access
   */
+  pthread_mutex_init(&state_lock, NULL);
+  pthread_mutex_init(&runway1_lock, NULL);
+  pthread_mutex_init(&runway2_lock, NULL);
+
   int shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
   if (shm_fd == -1) {
     perror("shm_open failed");
@@ -79,7 +84,7 @@ void* TakeOffsFunction(void* arg) {
 
       if (takeoffs == 5) {
         takeoffs = 0;
-        // kill(shared_PIDs[1], SIGUSR1);
+        kill(shared_PIDs[1], SIGUSR1);
       }
 
       pthread_mutex_unlock(&state_lock);
@@ -96,16 +101,16 @@ void* TakeOffsFunction(void* arg) {
       if (takeoffs == 5) {
         takeoffs = 0;
 
-        // kill(shared_PIDs[1], SIGUSR1);
+        kill(shared_PIDs[1], SIGUSR1);
       }
 
       pthread_mutex_unlock(&state_lock);
       pthread_mutex_unlock(&runway2_lock);
     }
-    sleep(1000);
+    sleep(1);
   }
 
-  // kill(shared_PIDs[1], SIGTERM);
+  kill(shared_PIDs[1], SIGTERM);
 }
 
 void SIGUSR2_handler(int signal) {
