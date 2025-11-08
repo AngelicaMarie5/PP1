@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,6 +7,8 @@
 #include <unistd.h>
 
 #include "../include/functions.h"
+
+#define NUM_THREADS 5
 
 int main() {
   // TODO 1: Call the function that creates the shared memory segment.
@@ -46,4 +49,13 @@ int main() {
 
   // TODO 6: Launch 5 threads which will be the controllers; each thread will
   // execute the TakeOffsFunction().
+  pthread_t threads[NUM_THREADS];
+
+  for (int i = 0; i < NUM_THREADS; i++) {
+    pthread_create(&threads[i], NULL, TakeOffsFunction, NULL);
+  }
+
+  for (int i = 0; i < NUM_THREADS; i++) {
+    pthread_join(threads[i], NULL);
+  }
 }
