@@ -108,3 +108,9 @@ void* TakeOffsFunction() {
 
   // kill(shared_PIDs[1], SIGTERM);
 }
+
+void SIGUSR2_handler(int signal) {
+  pthread_mutex_lock(&state_lock);
+  planes += 5;
+  pthread_mutex_unlock(&state_lock);
+}

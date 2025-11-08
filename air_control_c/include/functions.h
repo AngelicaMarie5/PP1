@@ -5,5 +5,6 @@ extern int* shared_PIDs;
 
 void MemoryCreate();
 void* TakeOffsFunction();
+void SIGUSR2_handler(int signal);
 
 #endif  // INCLUDE_FUNCTIONS_H_

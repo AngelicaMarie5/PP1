@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -18,7 +20,7 @@ int main() {
     int child_pid = getpid();
     shared_PIDs[1] = child_pid;
     // Not sure if this is the right absolute path
-    execl("./test/radio", "radio", "/SharedMemory", NULL);
+    execl("../../test/radio", "radio", "/SharedMemory", NULL);
     perror("execl failed");
     exit(1);
 
@@ -32,6 +34,12 @@ int main() {
 
   // TODO 3: Configure the SIGUSR2 signal to increment the planes on the runway
   // by 5.
+  struct sigaction sa = {0};
+  sa.sa_handler = &SIGUSR2_handler;
+  if (sigaction(SIGUSR2, &sa, NULL) == -1) {
+    perror("sigaction sigusr2");
+    exit(EXIT_FAILURE);
+  }
 
   // TODO 4: Launch the 'radio' executable and, once launched, store its PID in
   // the second position of the shared memory block.
