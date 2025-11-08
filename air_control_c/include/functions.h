@@ -3,6 +3,9 @@
 
 extern int* shared_PIDs;
 
+#define SHM_NAME "/SharedMemory"
+#define SHM_SIZE sizeof(int) * 3
+
 void MemoryCreate();
 void* TakeOffsFunction();
 void SIGUSR2_handler(int signal);

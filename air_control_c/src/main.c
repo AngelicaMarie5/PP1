@@ -23,7 +23,7 @@ int main() {
     int child_pid = getpid();
     shared_PIDs[1] = child_pid;
     // Not sure if this is the right absolute path
-    execl("../../test/radio", "radio", "/SharedMemory", NULL);
+    execl("../../test/radio", "radio", SHM_NAME, NULL);
     perror("execl failed");
     exit(1);
 

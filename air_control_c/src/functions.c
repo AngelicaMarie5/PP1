@@ -7,7 +7,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#define SIZE sizeof(int) * 3
 #define TOTAL_TAKEOFFS 20
 
 int planes = 0;
@@ -29,7 +28,7 @@ void MemoryCreate() {
   Not sure if it should be 0666 -> read and write acces
   Or if it should be 0777 -> read, write and execute access
   */
-  int shm_fd = shm_open("/SharedMemory", O_CREAT | O_RDWR, 0666);
+  int shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
   if (shm_fd == -1) {
     perror("shm_open failed");
     exit(1);
@@ -37,13 +36,13 @@ void MemoryCreate() {
 
   // Configure size of shared memory object large enough to store three integer
   // values
-  if (ftruncate(shm_fd, SIZE) == -1) {
+  if (ftruncate(shm_fd, SHM_SIZE) == -1) {
     perror("ftruncate failed");
     exit(1);
   }
 
   shared_PIDs =
-      (int*)mmap(NULL, SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+      (int*)mmap(NULL, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
   if (shared_PIDs == MAP_FAILED) {
     perror("mmap");
     exit(1);
@@ -51,12 +50,12 @@ void MemoryCreate() {
 
   // Instruction says: Save the PID of the air_control process in the first
   // position of the memory block. Maybe?
-  shared_PIDs[0] = getppid();
+  shared_PIDs[0] = getpid();
 }
 
 // void SigHandler2(int signal) {}
 
-void* TakeOffsFunction() {
+void* TakeOffsFunction(void* arg) {
   // TODO: implement the logic to control a takeoff thread
   //    Use a loop that runs while total_takeoffs < TOTAL_TAKEOFFS
   //    Use runway1_lock or runway2_lock to simulate a locked runway
